@@ -365,8 +365,15 @@ function Game() {
           <h2 className="text-2xl font-bold text-yellow-400 mb-2">Empire Shop</h2>
 
           <div className="mb-4 flex justify-center">
-            <TonConnectButton />
-          </div>
+  <TonConnectButton />
+</div>
+
+<button
+  onClick={() => tonConnectUI.openModal()}
+  className="w-full mb-4 bg-cyan-600 hover:bg-cyan-500 py-3 rounded-xl font-bold active:scale-95 transition"
+>
+  Connect TON Wallet
+</button>
 
           <div className="mb-5 text-sm text-zinc-300">
             Diamonds: <span className="text-cyan-300 font-bold">{diamonds.toLocaleString()}</span>
