@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { TonConnectButton, TonConnectUIProvider, useTonConnectUI } from "@tonconnect/ui-react";
 
 type Tab = "home" | "city" | "shop" | "wardrobe" | "profile";
 type BoostType = "none" | "x2" | "x3";
@@ -43,16 +44,19 @@ type DiamondPack = {
   title: string;
   diamonds: number;
   ton: number;
+  nanotons: string;
   tag: string;
 };
 
 const BOOST_DURATION = 300;
+const MANIFEST_URL = "https://mini-empire-mbkr.vercel.app/tonconnect-manifest.json";
+const OWNER_WALLET_ADDRESS = "UQAS3MPUQ51E4j1Dn0-rBZ9Eh-1lLSARiMHpKsrDygprL8am";
 
 const diamondPacks: DiamondPack[] = [
-  { id: "starter", title: "Starter Pack", diamonds: 100, ton: 0.5, tag: "Basic" },
-  { id: "value", title: "Value Pack", diamonds: 250, ton: 1, tag: "+25% bonus" },
-  { id: "pro", title: "Pro Pack", diamonds: 600, ton: 2, tag: "+50% bonus" },
-  { id: "empire", title: "Empire Pack", diamonds: 1500, ton: 5, tag: "Best value" },
+  { id: "starter", title: "Starter Pack", diamonds: 100, ton: 0.5, nanotons: "500000000", tag: "Basic" },
+  { id: "value", title: "Value Pack", diamonds: 250, ton: 1, nanotons: "1000000000", tag: "+25% bonus" },
+  { id: "pro", title: "Pro Pack", diamonds: 600, ton: 2, nanotons: "2000000000", tag: "+50% bonus" },
+  { id: "empire", title: "Empire Pack", diamonds: 1500, ton: 5, nanotons: "5000000000", tag: "Best value" },
 ];
 
 const businesses: Business[] = [
@@ -77,7 +81,8 @@ const skins: Skin[] = [
   { key: "king", title: "Empire King", price: 0, diamondPrice: 1000, emoji: "👑", bonus: "+ Premium king status" },
 ];
 
-export default function Home() {
+function Game() {
+  const [tonConnectUI] = useTonConnectUI();
   const [tab, setTab] = useState<Tab>("home");
   const [balance, setBalance] = useState(500);
   const [diamonds, setDiamonds] = useState(0);
@@ -197,8 +202,8 @@ export default function Home() {
   const collectProfit = () => {
     const now = Date.now();
 
-    if (now - lastClickTime < 200) {
-      setClickWarning("Tap limit: max 5 taps/sec.");
+    if (now - lastClickTime < 100) {
+      setClickWarning("Tap limit: max 10 taps/sec.");
       return;
     }
 
@@ -253,8 +258,28 @@ export default function Home() {
     setActiveSkin(skin.key);
   };
 
-  const buyDiamondPack = (pack: DiamondPack) => {
-    setPaymentMessage(`TON payment coming soon: ${pack.title} = ${pack.ton} TON. After backend verification, ${pack.diamonds} diamonds will be added.`);
+  const buyDiamondPack = async (pack: DiamondPack) => {
+    if (OWNER_WALLET_ADDRESS === "PASTE_YOUR_TON_WALLET_ADDRESS_HERE") {
+      setPaymentMessage("Add your TON wallet address in OWNER_WALLET_ADDRESS first.");
+      return;
+    }
+
+    try {
+      await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300,
+        messages: [
+          {
+            address: OWNER_WALLET_ADDRESS,
+            amount: pack.nanotons,
+          },
+        ],
+      });
+
+      setDiamonds((prev) => prev + pack.diamonds);
+      setPaymentMessage(`${pack.title} paid. ${pack.diamonds} diamonds added.`);
+    } catch {
+      setPaymentMessage("Payment was cancelled or failed.");
+    }
   };
 
   const resetProgress = () => {
@@ -288,7 +313,7 @@ export default function Home() {
 
           <CharacterCard skin={activeSkinData} />
 
-          <CityView level={level} owned={owned} large={false} vipCityGlow={vipCityGlow} />
+          <CityView level={level} owned={owned} large={false} vipCityGlow={vipCityGlow} activeBoost={activeBoost} />
 
           <div className="bg-zinc-900 p-5 rounded-2xl w-80 shadow-2xl">
             <h2 className="text-2xl font-bold mb-4 text-yellow-400">Starter Upgrades</h2>
@@ -308,7 +333,7 @@ export default function Home() {
 
       {tab === "city" && (
         <>
-          <CityView level={level} owned={owned} large vipCityGlow={vipCityGlow} />
+          <CityView level={level} owned={owned} large vipCityGlow={vipCityGlow} activeBoost={activeBoost} />
 
           <div className="bg-zinc-900 p-5 rounded-2xl w-80 shadow-2xl mb-5">
             <h2 className="text-2xl font-bold text-yellow-400 mb-4">City Control</h2>
@@ -338,6 +363,10 @@ export default function Home() {
       {tab === "shop" && (
         <div className="bg-zinc-900 p-5 rounded-2xl w-80 shadow-2xl">
           <h2 className="text-2xl font-bold text-yellow-400 mb-2">Empire Shop</h2>
+
+          <div className="mb-4 flex justify-center">
+            <TonConnectButton />
+          </div>
 
           <div className="mb-5 text-sm text-zinc-300">
             Diamonds: <span className="text-cyan-300 font-bold">{diamonds.toLocaleString()}</span>
@@ -479,6 +508,14 @@ export default function Home() {
   );
 }
 
+export default function Home() {
+  return (
+    <TonConnectUIProvider manifestUrl={MANIFEST_URL}>
+      <Game />
+    </TonConnectUIProvider>
+  );
+}
+
 function formatTime(seconds: number) {
   const minutes = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -569,11 +606,13 @@ function CityView({
   level,
   owned,
   vipCityGlow,
+  activeBoost,
   large = false,
 }: {
   level: number;
   owned: Record<BusinessKey, boolean>;
   vipCityGlow: boolean;
+  activeBoost: BoostType;
   large?: boolean;
 }) {
   return (
@@ -584,6 +623,11 @@ function CityView({
     >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,#facc15,transparent_18%)] opacity-25"></div>
       {vipCityGlow && <div className="absolute inset-0 bg-yellow-400/10 animate-pulse"></div>}
+      {activeBoost !== "none" && <div className="absolute inset-0 bg-purple-500/10 animate-pulse"></div>}
+
+      <div className="absolute top-12 left-8 w-1 h-1 rounded-full bg-white shadow-[0_0_12px_white]"></div>
+      <div className="absolute top-24 right-16 w-1 h-1 rounded-full bg-cyan-200 shadow-[0_0_12px_rgba(34,211,238,1)]"></div>
+      <div className="absolute top-36 left-28 w-1 h-1 rounded-full bg-yellow-200 shadow-[0_0_12px_rgba(250,204,21,1)]"></div>
 
       <div className="absolute top-6 right-8 w-24 h-24 bg-yellow-300 rounded-full blur-3xl opacity-20"></div>
       <div className="absolute top-20 left-6 w-16 h-16 bg-cyan-400 rounded-full blur-3xl opacity-20"></div>
@@ -592,6 +636,9 @@ function CityView({
 
       <div className="absolute bottom-20 left-[-10px] w-96 h-14 bg-zinc-700 rotate-[-8deg] rounded-full opacity-80"></div>
       <div className="absolute bottom-28 left-10 w-72 h-8 bg-zinc-600 rotate-[8deg] rounded-full opacity-60"></div>
+      <div className="absolute bottom-14 left-8 w-20 h-5 bg-black/30 rotate-[-8deg] rounded-full blur-sm"></div>
+      <div className="absolute bottom-18 right-10 w-24 h-6 bg-black/30 rotate-[-8deg] rounded-full blur-sm"></div>
+      <div className="absolute bottom-32 left-32 w-28 h-6 bg-black/30 rotate-[8deg] rounded-full blur-sm"></div>
 
       <div className="absolute bottom-24 left-0 w-full h-[2px] bg-cyan-400 opacity-40 shadow-[0_0_14px_rgba(34,211,238,0.9)]"></div>
       <div className="absolute bottom-36 left-0 w-full h-[2px] bg-purple-400 opacity-30 shadow-[0_0_14px_rgba(192,132,252,0.9)]"></div>
@@ -612,7 +659,14 @@ function CityView({
 
       <div className="absolute top-4 left-4 text-xs text-zinc-300">City Level {level}</div>
       <div className="absolute top-4 right-4 text-xs text-cyan-300">
-        {vipCityGlow ? "VIP Glow" : "Neo District"}
+        {vipCityGlow ? "VIP Glow" : activeBoost !== "none" ? "Boosted City" : "Neo District"}
+      </div>
+
+      <div className="absolute bottom-4 left-4 right-4 h-2 rounded-full bg-black/40 overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-yellow-400 via-cyan-400 to-purple-500"
+          style={{ width: `${Math.min(100, level * 10)}%` }}
+        ></div>
       </div>
     </div>
   );
