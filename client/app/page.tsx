@@ -50,7 +50,7 @@ type DiamondPack = {
 
 const BOOST_DURATION = 300;
 const MANIFEST_URL = "https://mini-empire-mbkr.vercel.app/tonconnect-manifest.json";
-const OWNER_WALLET_ADDRESS = "UQAS3MPUQ51E4j1Dn0-rBZ9Eh-1lLSARiMHpKsrDygprL8am";
+const OWNER_WALLET_ADDRESS = "PASTE_YOUR_TON_WALLET_ADDRESS_HERE";
 
 const diamondPacks: DiamondPack[] = [
   { id: "starter", title: "Starter Pack", diamonds: 100, ton: 0.5, nanotons: "500000000", tag: "Basic" },
@@ -60,17 +60,17 @@ const diamondPacks: DiamondPack[] = [
 ];
 
 const businesses: Business[] = [
-  { key: "lemonade", title: "Lemonade Stand", price: 300, bonus: 5, color: "bg-yellow-500", label: "SHOP" },
-  { key: "coffee", title: "Coffee Bar", price: 900, bonus: 12, color: "bg-orange-500", label: "CAFE" },
-  { key: "carWash", title: "Car Wash", price: 2200, bonus: 25, color: "bg-blue-500", label: "WASH" },
-  { key: "gym", title: "Gym", price: 5000, bonus: 55, color: "bg-red-500", label: "GYM" },
-  { key: "cinema", title: "Cinema", price: 12000, bonus: 120, color: "bg-pink-500", label: "MOVIE" },
-  { key: "bank", title: "Bank", price: 28000, bonus: 300, color: "bg-emerald-500", label: "BANK" },
-  { key: "hotel", title: "Hotel", price: 65000, bonus: 750, color: "bg-purple-500", label: "HOTEL" },
-  { key: "office", title: "IT Office", price: 150000, bonus: 1800, color: "bg-cyan-500", label: "IT" },
-  { key: "cryptoLab", title: "Crypto Lab", price: 400000, bonus: 5000, color: "bg-lime-500", label: "LAB" },
-  { key: "airport", title: "Private Airport", price: 900000, bonus: 12000, color: "bg-sky-500", label: "AIR" },
-  { key: "spaceTower", title: "Space Tower", price: 2500000, bonus: 40000, color: "bg-violet-500", label: "SPACE" },
+  { key: "lemonade", title: "Lemonade Stand", price: 300, bonus: 2, color: "bg-yellow-500", label: "SHOP" },
+  { key: "coffee", title: "Coffee Bar", price: 900, bonus: 6, color: "bg-orange-500", label: "CAFE" },
+  { key: "carWash", title: "Car Wash", price: 2200, bonus: 12, color: "bg-blue-500", label: "WASH" },
+  { key: "gym", title: "Gym", price: 5000, bonus: 28, color: "bg-red-500", label: "GYM" },
+  { key: "cinema", title: "Cinema", price: 12000, bonus: 60, color: "bg-pink-500", label: "MOVIE" },
+  { key: "bank", title: "Bank", price: 28000, bonus: 150, color: "bg-emerald-500", label: "BANK" },
+  { key: "hotel", title: "Hotel", price: 65000, bonus: 375, color: "bg-purple-500", label: "HOTEL" },
+  { key: "office", title: "IT Office", price: 150000, bonus: 900, color: "bg-cyan-500", label: "IT" },
+  { key: "cryptoLab", title: "Crypto Lab", price: 400000, bonus: 2500, color: "bg-lime-500", label: "LAB" },
+  { key: "airport", title: "Private Airport", price: 900000, bonus: 6000, color: "bg-sky-500", label: "AIR" },
+  { key: "spaceTower", title: "Space Tower", price: 2500000, bonus: 20000, color: "bg-violet-500", label: "SPACE" },
 ];
 
 const skins: Skin[] = [
@@ -259,6 +259,11 @@ function Game() {
   };
 
   const buyDiamondPack = async (pack: DiamondPack) => {
+    if (OWNER_WALLET_ADDRESS === "PASTE_YOUR_TON_WALLET_ADDRESS_HERE") {
+      setPaymentMessage("Add your TON wallet address in OWNER_WALLET_ADDRESS first.");
+      return;
+    }
+
     try {
       await tonConnectUI.sendTransaction({
         validUntil: Math.floor(Date.now() / 1000) + 300,
@@ -272,12 +277,10 @@ function Game() {
 
       setDiamonds((prev) => prev + pack.diamonds);
       setPaymentMessage(`${pack.title} paid. ${pack.diamonds} diamonds added.`);
-   } catch (error) {
+    } catch {
       setPaymentMessage("Payment was cancelled or failed.");
     }
   };
-
- 
 
   const resetProgress = () => {
     localStorage.removeItem("mini-empire-save-v5");
