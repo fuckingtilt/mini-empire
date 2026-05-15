@@ -197,8 +197,8 @@ export default function Home() {
   const collectProfit = () => {
     const now = Date.now();
 
-    if (now - lastClickTime < 800) {
-      setClickWarning("Too fast. Wait a moment.");
+    if (now - lastClickTime < 200) {
+      setClickWarning("Tap limit: max 5 taps/sec.");
       return;
     }
 
