@@ -258,34 +258,26 @@ function Game() {
     setActiveSkin(skin.key);
   };
 
-const buyDiamondPack = async (pack: DiamondPack) => {
-  try {
-    await tonConnectUI.sendTransaction({
-      validUntil: Math.floor(Date.now() / 1000) + 300,
-      messages: [
-        {
-          address: OWNER_WALLET_ADDRESS,
-          amount: pack.nanotons,
-        },
-      ],
-    });
-
-    setDiamonds((prev) => prev + pack.diamonds);
-
-    setPaymentMessage(
-      `${pack.title} paid. ${pack.diamonds} diamonds added.`
-    );
-  } catch {
-    setPaymentMessage("Payment was cancelled or failed.");
-  }
-};
+  const buyDiamondPack = async (pack: DiamondPack) => {
+    try {
+      await tonConnectUI.sendTransaction({
+        validUntil: Math.floor(Date.now() / 1000) + 300,
+        messages: [
+          {
+            address: OWNER_WALLET_ADDRESS,
+            amount: pack.nanotons,
+          },
+        ],
+      });
 
       setDiamonds((prev) => prev + pack.diamonds);
       setPaymentMessage(`${pack.title} paid. ${pack.diamonds} diamonds added.`);
-    } catch {
+   } catch (error) {
       setPaymentMessage("Payment was cancelled or failed.");
     }
   };
+
+ 
 
   const resetProgress = () => {
     localStorage.removeItem("mini-empire-save-v5");
